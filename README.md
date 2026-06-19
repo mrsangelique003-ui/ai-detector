@@ -6,7 +6,8 @@ A single-file HTML tool that gives a heuristic "AI or human?" opinion on three k
 
 | Photograph tab | Signature tab |
 |---|---|
-| ![Photograph exhibit](screenshots/screenshot-photograph.jpg) | ![Signature exhibit](screenshots/screenshot-signature.jpg) |
+| ![Photograph exhibit](Images/img-photograph.jpg) |
+![Signature exhibit](screenshots/screenshot-signature.jpg) |
 
 ![Signature exhibit alternate view](screenshots/screenshot-signature-2.jpg)
 
