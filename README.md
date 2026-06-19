@@ -4,12 +4,9 @@ A single-file HTML tool that gives a heuristic "AI or human?" opinion on three k
 
 ##Images
 
-| Photograph tab | Signature tab |
-|---|---|
-| ![Photograph exhibit](Images/photo AI.jpg) |
-![Signature exhibit](Images/signature AI.jpg) |
-
-![written exhibit alternate view](Images/written AI.jpg)
+![Photograph](Images/photo AI.jpg) 
+![Signature](Images/signature AI.jpg) 
+![written](Images/written AI.jpg)
 
 ## Features
 
