@@ -2,14 +2,14 @@
 
 A single-file HTML tool that gives a heuristic "AI or human?" opinion on three kinds of evidence: written text, photographs, and signatures. Runs entirely in the browser — no server, no install, no data leaves your machine.
 
-## Screenshots
+##Images
 
 | Photograph tab | Signature tab |
 |---|---|
-| ![Photograph exhibit](Images/img-photograph.jpg) |
-![Signature exhibit](screenshots/screenshot-signature.jpg) |
+| ![Photograph exhibit](Images/photo AI.jpg) |
+![Signature exhibit](Images/signature AI.jpg) |
 
-![Signature exhibit alternate view](screenshots/screenshot-signature-2.jpg)
+![written exhibit alternate view](Images/written AI.jpg)
 
 ## Features
 
