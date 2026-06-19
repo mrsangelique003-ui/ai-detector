@@ -2,6 +2,14 @@
 
 A single-file HTML tool that gives a heuristic "AI or human?" opinion on three kinds of evidence: written text, photographs, and signatures. Runs entirely in the browser — no server, no install, no data leaves your machine.
 
+## Screenshots
+
+| Photograph tab | Signature tab |
+|---|---|
+| ![Photograph exhibit](screenshots/screenshot-photograph.jpg) | ![Signature exhibit](screenshots/screenshot-signature.jpg) |
+
+![Signature exhibit alternate view](screenshots/screenshot-signature-2.jpg)
+
 ## Features
 
 ### Exhibit A — Written Text
@@ -54,4 +62,3 @@ Treat every verdict as a **lead worth investigating further**, not a conclusion.
 ## File
 
 - `ai-detector.html` — the entire app (open directly in a browser)
-
