@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CASEFILE — AI Authenticity Lab</title>
+<style>
+  :root{
+    --paper:#ECE6D8;
+    --ink:#1B1A17;
+    --redact:#A8311F;
+    --stamp:#3D5A45;
+    --line:#C9C0AB;
+    --mono: 'Courier New', monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--ink);
+    color:var(--paper);
+    font-family: Georgia, 'Times New Roman', serif;
+  }
+  .sheet{
+    max-width:980px;
+    margin:0 auto;
+    padding:40px 28px 80px;
+  }
+  .header{
+    border-bottom:3px double var(--paper);
+    padding-bottom:18px;
+    margin-bottom:30px;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+  }
+  .header h1{
+    font-family: 'Georgia', serif;
+    letter-spacing:4px;
+    font-size:30px;
+    margin:0;
+    text-transform:uppercase;
+  }
+  .header .sub{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:2px;
+    color:#A39C8B;
+  }
+  .case-no{
+    font-family:var(--mono);
+    font-size:12px;
+    text-align:right;
+    color:#A39C8B;
+  }
+  .tabs{
+    display:flex;
+    gap:2px;
+    margin-bottom:0;
+  }
+  .tab{
+    flex:1;
+    background:#26241E;
+    color:#A39C8B;
+    border:1px solid #45422F;
+    border-bottom:none;
+    padding:12px 10px;
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    cursor:pointer;
+    text-align:center;
+  }
+  .tab.active{
+    background:var(--paper);
+    color:var(--ink);
+    font-weight:bold;
+  }
+  .panel{
+    background:var(--paper);
+    color:var(--ink);
+    padding:28px;
+    min-height:380px;
+    border:1px solid #45422F;
+  }
+  .panel{display:none;}
+  .panel.active{display:block;}
+  h2.section-title{
+    font-size:13px;
+    letter-spacing:3px;
+    text-transform:uppercase;
+    color:var(--redact);
+    margin:0 0 16px;
+    border-bottom:1px solid var(--line);
+    padding-bottom:8px;
+  }
+  textarea{
+    width:100%;
+    min-height:160px;
+    font-family:var(--mono);
+    font-size:13px;
+    padding:12px;
+    background:#fff;
+    border:1px solid var(--line);
+    color:var(--ink);
+    resize:vertical;
+  }
+  .drop{
+    border:2px dashed var(--line);
+    padding:30px;
+    text-align:center;
+    cursor:pointer;
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:1px;
+    color:#6b6552;
+    background:#F5F1E6;
+  }
+  .drop.over{border-color:var(--redact); color:var(--redact);}
+  input[type=file]{display:none;}
+  .preview{
+    max-width:100%;
+    max-height:260px;
+    margin-top:14px;
+    border:1px solid var(--line);
+  }
+  button.run{
+    margin-top:16px;
+    background:var(--ink);
+    color:var(--paper);
+    border:none;
+    padding:12px 22px;
+    font-family:var(--mono);
+    letter-spacing:2px;
+    text-transform:uppercase;
+    font-size:12px;
+    cursor:pointer;
+  }
+  button.run:hover{background:var(--redact);}
+  button.run:disabled{opacity:0.4; cursor:not-allowed;}
+  .verdict{
+    margin-top:24px;
+    border-top:3px double var(--line);
+    padding-top:18px;
+  }
+  .stamp-row{
+    display:flex;
+    align-items:center;
+    gap:18px;
+    margin-bottom:14px;
+  }
+  .stamp{
+    font-family:var(--mono);
+    font-weight:bold;
+    font-size:22px;
+    letter-spacing:3px;
+    border:4px solid currentColor;
+    padding:8px 16px;
+    transform:rotate(-3deg);
+    display:inline-block;
+  }
+  .stamp.human{color:var(--stamp);}
+  .stamp.ai{color:var(--redact);}
+  .stamp.uncertain{color:#8a6d1f;}
+  .score-label{
+    font-family:var(--mono);
+    font-size:12px;
+    color:#6b6552;
+  }
+  .bar-track{
+    width:100%;
+    height:10px;
+    background:#ddd5c2;
+    border:1px solid var(--line);
+    margin:6px 0 18px;
+  }
+  .bar-fill{
+    height:100%;
+    background:var(--redact);
+  }
+  .findings{
+    font-family:var(--mono);
+    font-size:12px;
+    line-height:1.8;
+  }
+  .findings li{margin-bottom:4px;}
+  .disclaimer{
+    margin-top:26px;
+    font-family:var(--mono);
+    font-size:10px;
+    color:#8a8267;
+    border-top:1px solid var(--line);
+    padding-top:10px;
+    line-height:1.6;
+  }
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:24px;}
+  @media(max-width:700px){.grid2{grid-template-columns:1fr;}}
+  canvas{display:none;}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <div class="header">
+    <div>
+      <h1>Casefile</h1>
+      <div class="sub">AI Authenticity Examination Unit</div>
+    </div>
+    <div class="case-no">FILE NO. <span id="caseno"></span><br>OPENED <span id="opendate"></span></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="text">Written Text</div>
+    <div class="tab" data-tab="image">Photograph</div>
+    <div class="tab" data-tab="signature">Signature</div>
+  </div>
+
+  <!-- TEXT PANEL -->
+  <div class="panel active" id="panel-text">
+    <h2 class="section-title">Exhibit A — Written Text</h2>
+    <textarea id="textInput" placeholder="Paste the passage under examination (60+ words for a reliable read)..."></textarea>
+    <br>
+    <button class="run" id="runText">Examine Text</button>
+    <div class="verdict" id="textVerdict" style="display:none;"></div>
+  </div>
+
+  <!-- IMAGE PANEL -->
+  <div class="panel" id="panel-image">
+    <h2 class="section-title">Exhibit B — Photograph</h2>
+    <div class="drop" id="dropImage">Drop a photo here, or click to select<br>(JPG / PNG)</div>
+    <input type="file" id="fileImage" accept="image/*">
+    <img id="previewImage" class="preview" style="display:none;">
+    <br>
+    <button class="run" id="runImage" disabled>Examine Photograph</button>
+    <div class="verdict" id="imageVerdict" style="display:none;"></div>
+  </div>
+
+  <!-- SIGNATURE PANEL -->
+  <div class="panel" id="panel-signature">
+    <h2 class="section-title">Exhibit C — Signature</h2>
+    <div class="drop" id="dropSig">Drop a signature image here, or click to select<br>(clear scan or photo, plain background works best)</div>
+    <input type="file" id="fileSig" accept="image/*">
+    <img id="previewSig" class="preview" style="display:none;">
+    <br>
+    <button class="run" id="runSig" disabled>Examine Signature</button>
+    <div class="verdict" id="sigVerdict" style="display:none;"></div>
+  </div>
+
+  <div class="disclaimer">
+    NOTICE: This tool produces a heuristic, statistical opinion only — it analyzes patterns such as
+    sentence-length variance, repetition, pixel-level noise/edge signatures, and stroke geometry.
+    It is not a forensic-grade or legally admissible AI-detection system, and no current tool (including
+    this one) can guarantee certainty about whether text, an image, or a signature is AI-generated or human-made.
+    Treat the verdict as a lead worth investigating further, not a conclusion.
+  </div>
+</div>
+
+<canvas id="workCanvas"></canvas>
+
+<script>
+document.getElementById('caseno').textContent = Math.floor(100000+Math.random()*899999);
+document.getElementById('opendate').textContent = new Date().toLocaleDateString('en-US',{year:'numeric',month:'short',day:'2-digit'}).toUpperCase();
+
+// TABS
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('panel-'+t.dataset.tab).classList.add('active');
+  });
+});
+
+function verdictBlock(container, score, label, findings){
+  // score 0-100, higher = more likely AI
+  let stampClass, stampText;
+  if(score>=65){stampClass='ai'; stampText='LIKELY AI';}
+  else if(score>=40){stampClass='uncertain'; stampText='INCONCLUSIVE';}
+  else {stampClass='human'; stampText='LIKELY HUMAN';}
+
+  container.style.display='block';
+  container.innerHTML = `
+    <div class="stamp-row">
+      <div class="stamp ${stampClass}">${stampText}</div>
+      <div>
+        <div class="score-label">AI-LIKELIHOOD SCORE: ${score}/100</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${score}%;"></div></div>
+      </div>
+    </div>
+    <div class="score-label">FINDINGS:</div>
+    <ul class="findings">${findings.map(f=>'<li>— '+f+'</li>').join('')}</ul>
+  `;
+}
+
+/* ---------------- TEXT ANALYSIS ---------------- */
+document.getElementById('runText').addEventListener('click',()=>{
+  const text = document.getElementById('textInput').value.trim();
+  const out = document.getElementById('textVerdict');
+  if(text.split(/\s+/).length < 15){
+    out.style.display='block';
+    out.innerHTML = '<div class="score-label">Need at least ~15 words for a meaningful read.</div>';
+    return;
+  }
+  const sentences = text.split(/(?<=[.!?])\s+/).filter(s=>s.trim().length>0);
+  const words = text.toLowerCase().match(/[a-z0-9']+/g) || [];
+  const lens = sentences.map(s=> (s.match(/[a-z0-9']+/gi)||[]).length).filter(n=>n>0);
+
+  const mean = lens.reduce((a,b)=>a+b,0)/lens.length;
+  const variance = lens.reduce((a,b)=>a+Math.pow(b-mean,2),0)/lens.length;
+  const stdev = Math.sqrt(variance);
+  const burstiness = stdev/ (mean||1); // human text tends to have higher burstiness
+
+  // lexical diversity
+  const uniq = new Set(words);
+  const ttr = uniq.size/(words.length||1);
+
+  // repetition of common AI transition phrases
+  const aiPhrases = ["furthermore","moreover","in conclusion","it is important to note","overall,","additionally,","in today's world","delve into","plays a crucial role","navigate the complexities","tapestry","in summary","on the other hand","it's worth noting","ultimately,"];
+  const lowerText = text.toLowerCase();
+  let phraseHits = 0;
+  aiPhrases.forEach(p=>{ if(lowerText.includes(p)) phraseHits++; });
+
+  // punctuation variety (humans use more dashes, ellipses, parens irregularly)
+  const exclam = (text.match(/!/g)||[]).length;
+  const emdash = (text.match(/—|--/g)||[]).length;
+  const semis = (text.match(/;/g)||[]).length;
+
+  let score = 50;
+  // low burstiness (uniform sentence length) -> more AI-like
+  if(burstiness < 0.35) score += 18;
+  else if(burstiness < 0.5) score += 8;
+  else score -= 12;
+
+  if(ttr < 0.4) score += 10; else if(ttr>0.6) score -= 8;
+
+  score += Math.min(phraseHits*7, 25);
+
+  if(emdash>=2) score -= 6;
+  if(semis>=2) score -= 4;
+  if(exclam===0 && words.length>120) score += 4;
+
+  score = Math.max(2, Math.min(98, Math.round(score)));
+
+  const findings = [
+    `Average sentence length ${mean.toFixed(1)} words, std-dev ${stdev.toFixed(1)} (burstiness ${burstiness.toFixed(2)}) — ${burstiness<0.35?'unusually uniform, a common AI fingerprint':'naturally irregular, consistent with human drafting'}`,
+    `Lexical diversity (type-token ratio): ${ttr.toFixed(2)} — ${ttr<0.4?'repetitive vocabulary':'varied vocabulary'}`,
+    `${phraseHits} stock AI-style transition phrase(s) detected (e.g. "furthermore", "delve into", "plays a crucial role")`,
+    `Em-dashes: ${emdash}, semicolons: ${semis}, exclamation marks: ${exclam}`
+  ];
+  verdictBlock(out, score, '', findings);
+});
+
+/* ---------------- IMAGE HELPERS ---------------- */
+function setupDrop(dropId, fileId, previewId, runBtnId, onReady){
+  const drop = document.getElementById(dropId);
+  const input = document.getElementById(fileId);
+  const preview = document.getElementById(previewId);
+  const runBtn = document.getElementById(runBtnId);
+
+  drop.addEventListener('click', ()=> input.click());
+  drop.addEventListener('dragover', e=>{e.preventDefault(); drop.classList.add('over');});
+  drop.addEventListener('dragleave', ()=> drop.classList.remove('over'));
+  drop.addEventListener('drop', e=>{
+    e.preventDefault(); drop.classList.remove('over');
+    if(e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+  });
+  input.addEventListener('change', e=>{
+    if(e.target.files.length) handleFile(e.target.files[0]);
+  });
+
+  function handleFile(file){
+    const url = URL.createObjectURL(file);
+    preview.src = url;
+    preview.style.display='block';
+    runBtn.disabled = false;
+    preview.onload = ()=> onReady && onReady(preview);
+  }
+}
+
+function getImageData(imgEl, maxDim=500){
+  const canvas = document.getElementById('workCanvas');
+  let w = imgEl.naturalWidth, h = imgEl.naturalHeight;
+  const scale = Math.min(1, maxDim/Math.max(w,h));
+  w = Math.round(w*scale); h = Math.round(h*scale);
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(imgEl,0,0,w,h);
+  return {data: ctx.getImageData(0,0,w,h), w, h};
+}
+
+function imageStats(imgEl){
+  const {data, w, h} = getImageData(imgEl);
+  const px = data.data;
+  let n = w*h;
+  // grayscale buffer
+  const gray = new Float32Array(n);
+  for(let i=0;i<n;i++){
+    const r=px[i*4], g=px[i*4+1], b=px[i*4+2];
+    gray[i] = 0.299*r+0.587*g+0.114*b;
+  }
+  // high-frequency noise estimate (laplacian-ish)
+  let edgeEnergy=0, noiseEnergy=0, count=0;
+  for(let y=1;y<h-1;y++){
+    for(let x=1;x<w-1;x++){
+      const idx = y*w+x;
+      const lap = 4*gray[idx] - gray[idx-1]-gray[idx+1]-gray[idx-w]-gray[idx+w];
+      edgeEnergy += Math.abs(lap);
+      count++;
+    }
+  }
+  edgeEnergy/=count;
+
+  // local noise: high-frequency residual in flat-ish patches
+  let residSum=0, residCount=0;
+  for(let y=2;y<h-2;y+=2){
+    for(let x=2;x<w-2;x+=2){
+      const idx=y*w+x;
+      const local = [gray[idx-1],gray[idx+1],gray[idx-w],gray[idx+w]];
+      const avg = local.reduce((a,b)=>a+b,0)/4;
+      residSum += Math.abs(gray[idx]-avg);
+      residCount++;
+    }
+  }
+  const noiseLevel = residSum/residCount;
+
+  // color histogram smoothness / banding check
+  const hist = new Array(256).fill(0);
+  for(let i=0;i<n;i++) hist[Math.round(gray[i])]++;
+  let zeroBins=0;
+  for(let i=0;i<256;i++) if(hist[i]===0) zeroBins++;
+
+  // saturation extremity (AI images often oversaturated / overly smooth gradients)
+  let satSum=0;
+  for(let i=0;i<n;i++){
+    const r=px[i*4]/255, g=px[i*4+1]/255, b=px[i*4+2]/255;
+    const mx=Math.max(r,g,b), mn=Math.min(r,g,b);
+    satSum += (mx-mn);
+  }
+  const avgSat = satSum/n;
+
+  return {edgeEnergy, noiseLevel, zeroBins, avgSat, w, h};
+}
+
+/* ---------------- IMAGE ANALYSIS ---------------- */
+setupDrop('dropImage','fileImage','previewImage','runImage');
+document.getElementById('runImage').addEventListener('click',()=>{
+  const img = document.getElementById('previewImage');
+  const out = document.getElementById('imageVerdict');
+  const s = imageStats(img);
+
+  let score = 50;
+  // very low sensor noise -> often AI/upscaled
+  if(s.noiseLevel < 1.2) score += 22;
+  else if(s.noiseLevel < 2.5) score += 8;
+  else score -= 14;
+
+  if(s.zeroBins > 40) score += 10; // banding / limited tonal range
+  if(s.avgSat > 0.42) score += 8; // oversaturation common in generative images
+  if(s.edgeEnergy > 18 && s.noiseLevel < 2) score += 6; // crisp edges but no grain = synthetic look
+
+  score = Math.max(2, Math.min(98, Math.round(score)));
+
+  const findings = [
+    `Pixel-level sensor noise estimate: ${s.noiseLevel.toFixed(2)} — ${s.noiseLevel<1.2?'abnormally clean, lacking natural camera grain':'consistent with natural camera noise'}`,
+    `Local edge energy: ${s.edgeEnergy.toFixed(1)}`,
+    `Tonal histogram empty bins: ${s.zeroBins}/256 — ${s.zeroBins>40?'banding suggests heavy compression or synthetic gradients':'smooth natural tonal range'}`,
+    `Average color saturation: ${(s.avgSat*100).toFixed(1)}% — ${s.avgSat>0.42?'higher than typical unedited photos':'within normal photographic range'}`,
+    `Analyzed at ${s.w}×${s.h}px (downscaled for processing)`
+  ];
+  verdictBlock(out, score, '', findings);
+});
+
+/* ---------------- SIGNATURE ANALYSIS ---------------- */
+setupDrop('dropSig','fileSig','previewSig','runSig');
+document.getElementById('runSig').addEventListener('click',()=>{
+  const img = document.getElementById('previewSig');
+  const out = document.getElementById('sigVerdict');
+  const {data, w, h} = getImageData(img, 400);
+  const px = data.data;
+  const n = w*h;
+  const gray = new Float32Array(n);
+  for(let i=0;i<n;i++){
+    const r=px[i*4], g=px[i*4+1], b=px[i*4+2];
+    gray[i]=0.299*r+0.587*g+0.114*b;
+  }
+  // binarize (ink vs background) via simple threshold
+  let sum=0; for(let i=0;i<n;i++) sum+=gray[i];
+  const meanG = sum/n;
+  const thresh = meanG*0.75;
+  const ink = new Uint8Array(n);
+  let inkCount=0;
+  for(let i=0;i<n;i++){ ink[i] = gray[i]<thresh?1:0; if(ink[i]) inkCount++; }
+
+  // stroke width variance: for each ink pixel, estimate local run length horizontally
+  let widths=[];
+  for(let y=0;y<h;y++){
+    let runStart=-1;
+    for(let x=0;x<w;x++){
+      const idx=y*w+x;
+      if(ink[idx] && runStart===-1) runStart=x;
+      if((!ink[idx] || x===w-1) && runStart!==-1){
+        const len = x-runStart;
+        if(len>0 && len<30) widths.push(len);
+        runStart=-1;
+      }
+    }
+  }
+  const wMean = widths.reduce((a,b)=>a+b,0)/(widths.length||1);
+  const wVar = widths.reduce((a,b)=>a+Math.pow(b-wMean,2),0)/(widths.length||1);
+  const wStd = Math.sqrt(wVar);
+  const widthCV = wStd/(wMean||1); // human strokes: more pressure variance
+
+  // ink density and bounding box fill ratio
+  let minX=w,maxX=0,minY=h,maxY=0;
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++){
+    if(ink[y*w+x]){ if(x<minX)minX=x; if(x>maxX)maxX=x; if(y<minY)minY=y; if(y>maxY)maxY=y; }
+  }
+  const bboxArea = Math.max(1,(maxX-minX))*Math.max(1,(maxY-minY));
+  const fillRatio = inkCount/bboxArea;
+
+  // jitter: edge roughness of ink pixels (human strokes have irregular edges; vector/AI strokes very smooth)
+  let edgeIrregular=0, edgeTotal=0;
+  for(let y=1;y<h-1;y++){
+    for(let x=1;x<w-1;x++){
+      const idx=y*w+x;
+      if(ink[idx]){
+        const neighbors = ink[idx-1]+ink[idx+1]+ink[idx-w]+ink[idx+w];
+        if(neighbors>=1 && neighbors<=3) edgeIrregular++;
+        edgeTotal++;
+      }
+    }
+  }
+  const edgeRoughness = edgeTotal? edgeIrregular/edgeTotal : 0;
+
+  let score = 50;
+  if(widthCV < 0.35) score += 20; // too-uniform stroke width = printed/vector/AI
+  else if(widthCV < 0.55) score += 5;
+  else score -= 12;
+
+  if(fillRatio > 0.35) score += 8; // overly dense/blocky ink
+  if(edgeRoughness < 0.25) score += 12; // very smooth contours, no natural pen jitter
+  else score -= 8;
+
+  if(inkCount < 50){
+    score = 50;
+  }
+
+  score = Math.max(2, Math.min(98, Math.round(score)));
+
+  const findings = [
+    `Stroke width variability (coefficient of variation): ${widthCV.toFixed(2)} — ${widthCV<0.35?'unusually uniform, suggesting a printed font, vector trace, or AI-generated stroke':'natural pen-pressure variation'}`,
+    `Edge roughness index: ${edgeRoughness.toFixed(2)} — ${edgeRoughness<0.25?'contours too smooth for freehand ink':'jagged contours consistent with handwriting'}`,
+    `Ink fill ratio within bounding box: ${(fillRatio*100).toFixed(1)}%`,
+    `${inkCount} ink pixels detected at ${w}×${h}px analysis resolution${inkCount<50?' — too few to draw a reliable conclusion':''}`
+  ];
+  verdictBlock(out, score, '', findings);
+});
+</script>
+</body>
+</html>
